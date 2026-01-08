@@ -50,7 +50,6 @@ export function GoogleSignInButton({
 
         module.GoogleSignin.configure({
           webClientId: GOOGLE_WEB_CLIENT_ID,
-          offlineAccess: true,
         });
         setIsConfigured(true);
       } catch (error) {

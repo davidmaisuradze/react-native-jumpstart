@@ -1,39 +1,46 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import {
-  initializeAuth,
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink as firebaseIsSignInWithEmailLink,
-  signInWithEmailLink as firebaseSignInWithEmailLink,
-  signOut as firebaseSignOut,
-  sendPasswordResetEmail,
-  onAuthStateChanged as firebaseOnAuthStateChanged,
-  OAuthProvider,
-  GoogleAuthProvider,
-  signInWithCredential,
-  updateProfile,
-  User,
-  Auth,
-  // @ts-expect-error - getReactNativePersistence is available at runtime but not in types
-  getReactNativePersistence,
-} from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getApp, getApps, initializeApp } from "firebase/app";
+import {
+  Auth,
+  createUserWithEmailAndPassword,
+  isSignInWithEmailLink as firebaseIsSignInWithEmailLink,
+  onAuthStateChanged as firebaseOnAuthStateChanged,
+  signInWithEmailLink as firebaseSignInWithEmailLink,
+  signOut as firebaseSignOut,
+  getAuth,
+  // @ts-expect-error - getReactNativePersistence is available at runtime but not in types
+  getReactNativePersistence,
+  GoogleAuthProvider,
+  initializeAuth,
+  OAuthProvider,
+  sendPasswordResetEmail,
+  sendSignInLinkToEmail,
+  signInWithCredential,
+  signInWithEmailAndPassword,
+  updateProfile,
+  User,
+} from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 import { Platform } from "react-native";
 
-// Firebase configuration from your Firebase Console
+// Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyA5QvXm-rixsOnIqrT50wfSj2gxhvEusgU",
-  authDomain: "react-native-jumpstart-529b8.firebaseapp.com",
-  projectId: "react-native-jumpstart-529b8",
-  storageBucket: "react-native-jumpstart-529b8.firebasestorage.app",
-  messagingSenderId: "273995665286",
-  appId: "1:273995665286:android:58cbd4fc5cf50ef21b6607",
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
+
+// Validate Firebase config
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.warn(
+    "Firebase configuration incomplete. Check environment variables."
+  );
+}
 
 // Initialize Firebase (only if not already initialized)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
@@ -140,8 +147,11 @@ export const signInWithApple = async () => {
       };
     }
 
-    // Generate a secure nonce
-    const nonce = Math.random().toString(36).substring(2, 10);
+    // Generate a cryptographically secure nonce
+    const nonceBytes = await Crypto.getRandomBytesAsync(32);
+    const nonce = Array.from(new Uint8Array(nonceBytes))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
     const hashedNonce = await Crypto.digestStringAsync(
       Crypto.CryptoDigestAlgorithm.SHA256,
       nonce

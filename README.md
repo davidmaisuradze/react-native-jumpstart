@@ -1,18 +1,20 @@
 # React Native Jumpstart
 
-A production-ready React Native starter template following 2026 best practices. Built with Expo, Supabase, NativeWind, and RevenueCat.
+A production-ready React Native starter template following 2026 best practices. Built with Expo, Firebase, NativeWind, and RevenueCat.
 
 ## Table of Contents
 
 - [Tech Stack](#tech-stack)
 - [Features](#features)
 - [Quick Start](#quick-start)
+- [Development Builds vs Expo Go](#development-builds-vs-expo-go)
 - [Project Structure](#project-structure)
 - [Configuration Guide](#configuration-guide)
-  - [1. Supabase Setup](#1-supabase-setup)
-  - [2. RevenueCat Setup](#2-revenuecat-setup)
-  - [3. Sentry Setup](#3-sentry-setup)
-  - [4. PostHog Setup](#4-posthog-setup)
+  - [1. Firebase Setup](#1-firebase-setup)
+  - [2. Google Sign-In Setup](#2-google-sign-in-setup)
+  - [3. RevenueCat Setup](#3-revenuecat-setup)
+  - [4. Sentry Setup](#4-sentry-setup)
+  - [5. PostHog Setup](#5-posthog-setup)
 - [Understanding the Architecture](#understanding-the-architecture)
   - [State Management](#state-management)
   - [Authentication Flow](#authentication-flow)
@@ -31,11 +33,11 @@ A production-ready React Native starter template following 2026 best practices. 
 |----------|------------|---------|
 | Framework | Expo SDK 54+ | Zero-config React Native with New Architecture |
 | Navigation | Expo Router v4 | File-based routing with typed routes |
-| Backend | Supabase | PostgreSQL, Auth, Real-time, Edge Functions |
+| Backend | Firebase | Authentication, Firestore, Cloud Functions |
 | Styling | NativeWind v4 | Tailwind CSS for React Native |
 | State (Client) | Zustand | Lightweight state management |
 | State (Server) | TanStack Query v5 | Data fetching and caching |
-| Auth | Supabase Auth | Email, Google, Apple authentication |
+| Auth | Firebase Auth | Email, Magic Link, Google, Apple authentication |
 | Payments | RevenueCat | Cross-platform in-app purchases |
 | Forms | React Hook Form + Zod | Type-safe form validation |
 | Error Tracking | Sentry | Crash reporting and monitoring |
@@ -119,9 +121,79 @@ npm install
 # Copy environment variables
 cp .env.example .env
 
-# Start the development server
+# Start the development server (see next section for important notes!)
 npm start
 ```
+
+---
+
+## Development Builds vs Expo Go
+
+> **Important**: This template uses native modules (Google Sign-In, Sentry native crash reporting) that **do not work in Expo Go**. You must use an EAS Development Build for full functionality.
+
+### What's the Difference?
+
+| Feature | Expo Go | Development Build |
+|---------|---------|-------------------|
+| Google Sign-In | Not supported | Fully supported |
+| Apple Sign-In | Not supported | Fully supported |
+| Native crash reporting | Not supported | Fully supported |
+| Push notifications | Limited | Full support |
+| Custom native code | Not supported | Fully supported |
+| Setup time | Instant | ~5-10 min first build |
+
+### Quick Start with Development Builds
+
+**First time setup** (do this once):
+
+```bash
+# 1. Install EAS CLI globally
+npm install -g eas-cli
+
+# 2. Login to your Expo account
+eas login
+
+# 3. Configure your project (creates eas.json if needed)
+eas build:configure
+```
+
+**Create your development build:**
+
+```bash
+# For iOS Simulator
+eas build --profile development --platform ios
+
+# For Android Emulator/Device
+eas build --profile development --platform android
+
+# Or build for both
+eas build --profile development --platform all
+```
+
+The build takes ~10-15 minutes. Once complete, download and install it on your device/simulator.
+
+**Run the app:**
+
+```bash
+# Start the dev server with development client
+npx expo start --dev-client
+```
+
+Scan the QR code with your development build app (not Expo Go).
+
+### When to Use Expo Go
+
+Expo Go is still useful for:
+- Quick UI prototyping (if you don't need Google Sign-In)
+- Testing on a colleague's device without building
+- Learning React Native basics
+
+To run in Expo Go (limited features):
+```bash
+npx expo start
+```
+
+Note: Google Sign-In button will be hidden when running in Expo Go.
 
 ---
 
@@ -139,7 +211,7 @@ react-native-jumpstart/
 │   │   ├── ui/                   # Base UI components (Button, Input, Card)
 │   │   └── forms/                # Form components (FormInput)
 │   ├── lib/                      # Library configurations
-│   │   ├── supabase.ts           # Supabase client setup
+│   │   ├── firebase.ts           # Firebase client setup
 │   │   ├── revenuecat.ts         # RevenueCat setup
 │   │   ├── sentry.ts             # Sentry initialization
 │   │   ├── posthog.ts            # PostHog analytics
@@ -169,113 +241,173 @@ react-native-jumpstart/
 
 ## Configuration Guide
 
-### 1. Supabase Setup
+### 1. Firebase Setup
 
-Supabase provides your backend: database, authentication, and real-time subscriptions.
+Firebase provides authentication, database (Firestore), and cloud functions for your app.
 
-#### Step 1: Create a Supabase Project
+#### Step 1: Create a Firebase Project
 
-1. Go to [supabase.com](https://supabase.com) and sign up/login
-2. Click **"New Project"**
-3. Fill in:
-   - **Name**: Your app name (e.g., "my-awesome-app")
-   - **Database Password**: Generate a strong password (save it!)
-   - **Region**: Choose closest to your users
-4. Click **"Create new project"** and wait ~2 minutes
+1. Go to [Firebase Console](https://console.firebase.google.com)
+2. Click **"Create a project"** (or **"Add project"**)
+3. Enter a project name (e.g., "my-awesome-app")
+4. Enable/disable Google Analytics as preferred
+5. Click **"Create project"** and wait for setup
 
-#### Step 2: Get Your API Keys
+#### Step 2: Add iOS App
 
-1. In your project dashboard, go to **Settings** (gear icon) → **API**
-2. Copy these values to your `.env` file:
+1. In your Firebase project, click the **iOS+** button
+2. Enter your **Bundle ID**: `com.reactnativejumpstart` (or your custom ID)
+3. Enter an **App nickname** (optional)
+4. Click **"Register app"**
+5. Download **`GoogleService-Info.plist`**
+6. Place it in your **project root** folder (same level as `package.json`)
+7. Skip the "Add Firebase SDK" steps (already configured in this template)
+8. Click **"Continue to console"**
+
+#### Step 3: Add Android App
+
+1. Click **"Add app"** → Select **Android**
+2. Enter your **Package name**: `com.reactnativejumpstart` (or your custom ID)
+3. Enter an **App nickname** (optional)
+4. For **Debug signing certificate SHA-1**: See [Google Sign-In Setup](#2-google-sign-in-setup) section
+5. Click **"Register app"**
+6. Download **`google-services.json`**
+7. Place it in your **project root** folder
+8. Skip the remaining steps and click **"Continue to console"**
+
+#### Step 4: Enable Authentication
+
+1. In Firebase Console, go to **Build** → **Authentication**
+2. Click **"Get started"**
+3. Enable the following providers:
+
+**Email/Password:**
+- Click **Email/Password** → Enable → Save
+
+**Google Sign-In:**
+- Click **Google** → Enable
+- Select a **Project support email**
+- Click **Save**
+
+**Apple Sign-In** (required for iOS apps with social login):
+- Click **Apple** → Enable
+- Configure as needed (see Apple Developer setup)
+- Click **Save**
+
+#### Step 5: Get Firebase Config Values
+
+1. Go to **Project settings** (gear icon) → **General**
+2. Scroll to **"Your apps"** section
+3. Select your **Web app** (create one if needed: click **</>** icon)
+4. Copy the config values to your `.env` file:
 
 ```env
-EXPO_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxxx.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+EXPO_PUBLIC_FIREBASE_API_KEY=AIzaSy...
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
+EXPO_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abc123
 ```
 
-- **Project URL**: Your unique Supabase URL
-- **anon/public key**: Safe to use in client-side code (protected by Row Level Security)
+#### Step 6: Setup Firestore (Optional)
 
-#### Step 3: Enable Email Authentication
+If you need a database:
 
-1. Go to **Authentication** → **Providers**
-2. **Email** should be enabled by default
-3. Configure options:
-   - ✅ Enable email confirmations (recommended for production)
-   - ✅ Enable password recovery
+1. Go to **Build** → **Firestore Database**
+2. Click **"Create database"**
+3. Choose **Production mode** or **Test mode**
+4. Select a location closest to your users
+5. Click **"Enable"**
 
-#### Step 4: Setup Google OAuth (Optional)
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com)
-2. Create a new project or select existing
-3. Go to **APIs & Services** → **Credentials**
-4. Click **"Create Credentials"** → **"OAuth client ID"**
-5. Configure consent screen if prompted
-6. For **Application type**, choose:
-   - **Web application** (for Supabase callback)
-7. Add authorized redirect URI:
-   ```
-   https://YOUR_PROJECT_ID.supabase.co/auth/v1/callback
-   ```
-8. Copy **Client ID** and **Client Secret**
-9. In Supabase: **Authentication** → **Providers** → **Google**
-   - Enable Google provider
-   - Paste Client ID and Client Secret
-   - Save
-
-#### Step 5: Setup Apple OAuth (Required for iOS)
-
-If your iOS app offers any third-party login (Google, Facebook, etc.), Apple requires you to also offer Sign in with Apple.
-
-1. Go to [Apple Developer Portal](https://developer.apple.com)
-2. **Certificates, Identifiers & Profiles** → **Identifiers**
-3. Create or select your App ID
-4. Enable **Sign In with Apple** capability
-5. Create a **Services ID** for web authentication:
-   - Register a new Services ID
-   - Enable Sign In with Apple
-   - Configure domains and return URLs:
-     ```
-     Domain: YOUR_PROJECT_ID.supabase.co
-     Return URL: https://YOUR_PROJECT_ID.supabase.co/auth/v1/callback
-     ```
-6. Create a **Key** for Sign In with Apple:
-   - Download the `.p8` key file
-   - Note the Key ID
-7. In Supabase: **Authentication** → **Providers** → **Apple**
-   - Enable Apple provider
-   - Enter your Team ID, Key ID, and upload the `.p8` key
-   - Save
-
-#### Step 6: Create Database Tables (Optional)
-
-If you need custom tables, go to **SQL Editor** and run your migrations:
-
-```sql
--- Example: Create a profiles table
-create table profiles (
-  id uuid references auth.users on delete cascade primary key,
-  username text unique,
-  full_name text,
-  avatar_url text,
-  created_at timestamp with time zone default now()
-);
-
--- Enable Row Level Security
-alter table profiles enable row level security;
-
--- Policy: Users can view their own profile
-create policy "Users can view own profile" on profiles
-  for select using (auth.uid() = id);
-
--- Policy: Users can update their own profile
-create policy "Users can update own profile" on profiles
-  for update using (auth.uid() = id);
+Example security rules:
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read/write their own profile
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
 ```
 
 ---
 
-### 2. RevenueCat Setup
+### 2. Google Sign-In Setup
+
+Google Sign-In requires native OAuth credentials. This is separate from the Firebase Google provider configuration.
+
+> **Important**: Google Sign-In only works in **Development Builds**, not Expo Go.
+
+#### Step 1: Get the Web Client ID
+
+This is the most important step - the Web Client ID is used for ID token exchange.
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Select your Firebase project (Firebase auto-creates a GCP project)
+3. Go to **APIs & Services** → **Credentials**
+4. Find the **OAuth 2.0 Client ID** of type **"Web application"**
+   - Firebase creates this automatically when you enable Google Sign-In
+   - It's usually named "Web client (auto created by Google Service)"
+5. Copy the **Client ID** (ends with `.apps.googleusercontent.com`)
+6. Add to your `.env`:
+
+```env
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=123456789-abc123.apps.googleusercontent.com
+```
+
+#### Step 2: Get the iOS Client ID
+
+1. Open your `GoogleService-Info.plist` file
+2. Find the `CLIENT_ID` field
+3. Copy the value (ends with `.apps.googleusercontent.com`)
+4. Add to your `.env`:
+
+```env
+EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=123456789-xyz789.apps.googleusercontent.com
+```
+
+#### Step 3: Configure Android SHA-1 Fingerprint
+
+Android requires SHA-1 fingerprints to be registered:
+
+**For EAS builds (recommended):**
+```bash
+# Get the SHA-1 from your EAS build credentials
+eas credentials --platform android
+```
+
+**For local development:**
+```bash
+# Debug keystore (default Android Studio location)
+keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android
+```
+
+Add the SHA-1 fingerprint(s) to Firebase:
+1. Go to Firebase Console → **Project settings** → **General**
+2. Find your Android app
+3. Click **"Add fingerprint"**
+4. Paste the SHA-1 value
+5. Save
+
+#### Step 4: Test Google Sign-In
+
+1. Create a development build (see [Development Builds](#development-builds-vs-expo-go))
+2. Install the build on your device
+3. Run `npx expo start --dev-client`
+4. The Google Sign-In button should appear on the login screen
+5. Tap it and complete the OAuth flow
+
+**Troubleshooting:**
+- If button doesn't appear: You're running in Expo Go (not supported)
+- If sign-in fails with error 10: SHA-1 fingerprint not configured for Android
+- If sign-in fails with error 12501: User cancelled the flow
+
+---
+
+### 3. RevenueCat Setup
 
 RevenueCat handles in-app purchases and subscriptions across iOS and Android.
 
@@ -339,7 +471,7 @@ EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID=goog_xxxxxxxxxxxxxxxx
 
 ---
 
-### 3. Sentry Setup
+### 4. Sentry Setup
 
 Sentry tracks errors and crashes in your app so you can fix issues before users complain.
 
@@ -422,7 +554,7 @@ captureMessage("User completed onboarding");
 
 ---
 
-### 4. PostHog Setup
+### 5. PostHog Setup
 
 PostHog provides product analytics to understand how users interact with your app.
 
@@ -533,22 +665,20 @@ const { user, isAuthenticated } = useAuthStore();
 For data that comes from APIs and needs caching:
 - User profile data
 - Lists and collections
-- Any data fetched from Supabase
+- Any data fetched from Firestore or external APIs
 
 ```typescript
-// Example: Fetching user profile
+// Example: Fetching user profile from Firestore
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/src/lib/supabase";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/src/lib/firebase";
 
 const { data: profile, isLoading } = useQuery({
   queryKey: ["profile", userId],
   queryFn: async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-    return data;
+    const docRef = doc(db, "users", userId);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? docSnap.data() : null;
   }
 });
 ```
@@ -558,14 +688,14 @@ const { data: profile, isLoading } = useQuery({
 ```
 User opens app
        ↓
-Check stored session (expo-secure-store)
+Check stored session (AsyncStorage)
        ↓
    ┌───────────────────┐
    │  Session exists?  │
    └───────────────────┘
       ↓ No          ↓ Yes
       ↓             ↓
-Show (auth)     Validate with Supabase
+Show (auth)     Validate with Firebase
 screens              ↓
       ↓         ┌─────────────┐
       ↓         │   Valid?    │
@@ -576,7 +706,7 @@ screens              ↓
                        screens
 ```
 
-The auth flow is handled in `app/_layout.tsx` and redirects users automatically.
+The auth flow is handled in `app/_layout.tsx` with Firebase's `onAuthStateChanged` listener.
 
 ### Payment Flow
 
@@ -832,9 +962,22 @@ npm run typecheck
 - Check that `className` is spelled correctly
 - Restart Metro bundler with cache clear
 
-**Supabase auth not persisting:**
-- Check that `expo-secure-store` is properly installed
-- Verify your Supabase URL and anon key are correct
+**Firebase auth not persisting:**
+- Check that `@react-native-async-storage/async-storage` is properly installed
+- Verify your Firebase config values in `.env` are correct
+- Ensure `GoogleService-Info.plist` and `google-services.json` are in project root
+
+**Google Sign-In not working:**
+- Make sure you're using a **Development Build**, not Expo Go
+- Verify `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` is set in `.env`
+- For Android: Check SHA-1 fingerprint is added in Firebase Console
+- For iOS: Verify `GoogleService-Info.plist` contains correct `CLIENT_ID`
+- If error 10: SHA-1 fingerprint mismatch
+- If error 12501: User cancelled the sign-in flow
+
+**Google Sign-In button not appearing:**
+- You're running in Expo Go (use Development Build instead)
+- Run `eas build --profile development` to create a development build
 
 **RevenueCat not loading products:**
 - Ensure products are created in both App Store Connect and Play Console
@@ -905,5 +1048,5 @@ MIT License - feel free to use this for personal and commercial projects.
 
 - [GitHub Issues](https://github.com/your-username/react-native-jumpstart/issues)
 - [Expo Documentation](https://docs.expo.dev)
-- [Supabase Documentation](https://supabase.com/docs)
+- [Firebase Documentation](https://firebase.google.com/docs)
 - [RevenueCat Documentation](https://docs.revenuecat.com)

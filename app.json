@@ -22,7 +22,6 @@
       "usesAppleSignIn": true,
       "googleServicesFile": "./GoogleService-Info.plist",
       "associatedDomains": [
-        "applinks:reactnativejumpstart.page.link",
         "applinks:reactnativejumpstart.page.link"
       ],
       "infoPlist": {

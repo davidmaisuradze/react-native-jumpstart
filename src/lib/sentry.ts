@@ -10,21 +10,20 @@ export const initSentry = () => {
 
   Sentry.init({
     dsn: SENTRY_DSN,
-    // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
-    // Adjust this value in production
-    tracesSampleRate: 1.0,
+    // Sample 100% in dev, 10% in production to reduce costs and overhead
+    tracesSampleRate: __DEV__ ? 1.0 : 0.1,
     // Enable native crash handling
     enableNative: true,
     // Enable auto session tracking
     enableAutoSessionTracking: true,
     // Sessions close after app is in background for 30 seconds
     sessionTrackingIntervalMillis: 30000,
-    // Capture screenshots on error
-    attachScreenshot: true,
-    // Capture view hierarchy on error
-    attachViewHierarchy: true,
+    // Capture screenshots on error (dev only for privacy)
+    attachScreenshot: __DEV__,
+    // Capture view hierarchy on error (dev only for privacy)
+    attachViewHierarchy: __DEV__,
     _experiments: {
-      profilesSampleRate: 1.0,
+      profilesSampleRate: __DEV__ ? 1.0 : 0.1,
     },
     // Environment configuration
     environment: __DEV__ ? "development" : "production",

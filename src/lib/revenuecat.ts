@@ -21,7 +21,8 @@ export const configureRevenueCat = async (userId?: string) => {
     return;
   }
 
-  Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+  // Only enable verbose logging in development
+  Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.ERROR);
 
   await Purchases.configure({
     apiKey,
