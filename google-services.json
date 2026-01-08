@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "273995665286",
+    "project_id": "react-native-jumpstart-529b8",
+    "storage_bucket": "react-native-jumpstart-529b8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:273995665286:android:58cbd4fc5cf50ef21b6607",
+        "android_client_info": {
+          "package_name": "com.reactnativejumpstart"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "273995665286-72rfj2g33eu347vl7cdacm29sfoajtbq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.reactnativejumpstart",
+            "certificate_hash": "9cb04f1991495f57eb192be56ee7048ad47d9316"
+          }
+        },
+        {
+          "client_id": "273995665286-sh5lncssqrqs6idhen9ne7epbvn1rb6h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA5QvXm-rixsOnIqrT50wfSj2gxhvEusgU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "273995665286-sh5lncssqrqs6idhen9ne7epbvn1rb6h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "273995665286-0849vu8jnn8bp17u926r1geg9o3q7k28.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "react.native.jumpstart"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
