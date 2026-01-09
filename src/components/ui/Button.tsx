@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   TouchableOpacityProps,
   ActivityIndicator,
+  View,
 } from "react-native";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/utils/cn";
@@ -64,9 +65,11 @@ export interface ButtonProps
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   children?: React.ReactNode;
+  /** Accessibility label for screen readers. Falls back to children text if not provided. */
+  accessibilityLabel?: string;
 }
 
-const Button = forwardRef<TouchableOpacity, ButtonProps>(
+const Button = forwardRef<View, ButtonProps>(
   (
     {
       className,
@@ -77,11 +80,16 @@ const Button = forwardRef<TouchableOpacity, ButtonProps>(
       leftIcon,
       rightIcon,
       children,
+      accessibilityLabel,
       ...props
     },
     ref
   ) => {
     const isDisabled = disabled || isLoading;
+
+    // Derive accessibility label from children if not provided
+    const derivedAccessibilityLabel =
+      accessibilityLabel ?? (typeof children === "string" ? children : undefined);
 
     return (
       <TouchableOpacity
@@ -93,6 +101,12 @@ const Button = forwardRef<TouchableOpacity, ButtonProps>(
         )}
         disabled={isDisabled}
         activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={derivedAccessibilityLabel}
+        accessibilityState={{
+          disabled: isDisabled,
+          busy: isLoading,
+        }}
         {...props}
       >
         {isLoading ? (

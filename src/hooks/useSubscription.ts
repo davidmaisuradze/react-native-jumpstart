@@ -60,7 +60,7 @@ export const useSubscription = () => {
     });
 
     return () => {
-      subscription?.remove?.();
+      subscription.remove();
     };
   }, [setPremium]);
 

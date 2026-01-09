@@ -122,8 +122,21 @@ export const checkEntitlement = async (
 };
 
 // Subscription listener
+// Note: RevenueCat SDK's listener returns void in newer versions
+// We wrap it to provide a consistent cleanup interface
 export const addCustomerInfoUpdateListener = (
   callback: (customerInfo: CustomerInfo) => void
-) => {
-  return Purchases.addCustomerInfoUpdateListener(callback);
+): { remove: () => void } => {
+  // Cast to unknown first to handle the void return type safely
+  const result = Purchases.addCustomerInfoUpdateListener(callback) as unknown;
+
+  // Return an object with remove method for cleanup
+  return {
+    remove: () => {
+      // Handle case where SDK returns an EmitterSubscription with remove method
+      if (result && typeof result === "object" && "remove" in result) {
+        (result as { remove: () => void }).remove();
+      }
+    },
+  };
 };

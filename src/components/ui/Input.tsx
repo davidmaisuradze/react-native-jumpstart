@@ -60,12 +60,22 @@ const Input = forwardRef<TextInput, InputProps>(
             )}
             placeholderTextColor="#94a3b8"
             secureTextEntry={isPassword && !isPasswordVisible}
+            accessibilityLabel={label}
+            accessibilityState={{
+              disabled: props.editable === false,
+            }}
+            accessibilityHint={error ? `Error: ${error}` : hint}
             {...props}
           />
           {isPassword && (
             <TouchableOpacity
               onPress={() => setIsPasswordVisible(!isPasswordVisible)}
               className="ml-3"
+              accessibilityRole="button"
+              accessibilityLabel={
+                isPasswordVisible ? "Hide password" : "Show password"
+              }
+              accessibilityHint="Double tap to toggle password visibility"
             >
               <Ionicons
                 name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
