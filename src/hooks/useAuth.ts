@@ -47,7 +47,8 @@ export const useAuth = () => {
       } else {
         clearSentryUser();
         posthogReset();
-        rcLogoutUser().catch(console.error);
+        // RevenueCat handles user switching on next login - no logout needed
+        rcLogoutUser();
       }
     });
 

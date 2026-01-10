@@ -10,30 +10,53 @@ const API_KEY_IOS = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_IOS!;
 const API_KEY_ANDROID = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID!;
 
 let isConfigured = false;
+let configPromise: Promise<void> | null = null;
 
 export const configureRevenueCat = async (userId?: string) => {
-  if (isConfigured) return;
+  // Return existing promise if already configuring/configured
+  if (configPromise) return configPromise;
 
-  const apiKey = Platform.OS === "ios" ? API_KEY_IOS : API_KEY_ANDROID;
+  configPromise = (async () => {
+    if (isConfigured) return;
 
-  if (!apiKey) {
-    console.warn("RevenueCat API key not configured");
-    return;
+    const apiKey = Platform.OS === "ios" ? API_KEY_IOS : API_KEY_ANDROID;
+
+    if (!apiKey) {
+      console.warn("RevenueCat API key not configured");
+      return;
+    }
+
+    // Only enable verbose logging in development
+    Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.ERROR);
+
+    await Purchases.configure({
+      apiKey,
+      appUserID: userId,
+    });
+
+    isConfigured = true;
+  })();
+
+  return configPromise;
+};
+
+// Wait for RevenueCat to be configured before performing operations
+const waitForConfig = async () => {
+  if (configPromise) {
+    await configPromise;
   }
-
-  // Only enable verbose logging in development
-  Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.ERROR);
-
-  await Purchases.configure({
-    apiKey,
-    appUserID: userId,
-  });
-
-  isConfigured = true;
 };
 
 export const identifyUser = async (userId: string) => {
   try {
+    // Wait for RevenueCat to be configured before identifying
+    await waitForConfig();
+
+    if (!isConfigured) {
+      console.warn("RevenueCat not configured, skipping identify");
+      return null;
+    }
+
     const { customerInfo } = await Purchases.logIn(userId);
     return customerInfo;
   } catch (error) {
@@ -43,23 +66,13 @@ export const identifyUser = async (userId: string) => {
 };
 
 export const logoutUser = async () => {
-  try {
-    // Check if user is anonymous - can't logout anonymous users
-    const customerInfo = await Purchases.getCustomerInfo();
-    const appUserId = await Purchases.getAppUserID();
-
-    // Anonymous user IDs start with "$RCAnonymousID:"
-    if (appUserId.startsWith("$RCAnonymousID:")) {
-      // Already anonymous, no need to logout
-      return customerInfo;
-    }
-
-    const newCustomerInfo = await Purchases.logOut();
-    return newCustomerInfo;
-  } catch (error) {
-    console.error("Error logging out user:", error);
-    throw error;
-  }
+  // RevenueCat recommends NOT calling logOut() on the SDK.
+  // When a new user logs in, logIn(newUserId) will switch users.
+  // Calling logOut() creates race condition issues and throws errors
+  // when the user is already anonymous.
+  // See: https://www.revenuecat.com/docs/customers/identifying-customers
+  console.debug("RevenueCat: Skipping logout (will identify on next login)");
+  return null;
 };
 
 export const getOfferings = async (): Promise<PurchasesOffering | null> => {
