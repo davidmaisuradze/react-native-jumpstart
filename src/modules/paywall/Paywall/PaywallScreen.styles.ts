@@ -1,0 +1,30 @@
+export const styles = {
+  container: "flex-1 bg-white dark:bg-secondary-950",
+  header: "flex-row items-center justify-between p-4 pt-14",
+  headerSpacer: "w-10",
+  headerTitle: "text-lg font-semibold text-secondary-900 dark:text-white",
+  closeButton: "p-2",
+  scrollView: "flex-1 px-6",
+  hero: "items-center py-8",
+  heroIconContainer: "mb-4 h-20 w-20 items-center justify-center rounded-full bg-primary-100",
+  heroTitle: "text-2xl font-bold text-secondary-900 dark:text-white",
+  heroSubtitle: "mt-2 text-center text-secondary-500",
+  featuresSection: "mb-8",
+  featureRow: "mb-4 flex-row items-center",
+  featureIconContainer: "mr-4 h-10 w-10 items-center justify-center rounded-full bg-primary-100",
+  featureText: "flex-1 text-base text-secondary-700 dark:text-secondary-300",
+  packagesSection: "gap-3",
+  packageCard: "",
+  packageCardPopular: "border-primary-500 border-2",
+  popularBadge: "absolute -top-3 left-4 rounded-full bg-primary-500 px-3 py-1",
+  popularBadgeText: "text-xs font-semibold text-white",
+  packageContent: "flex-row items-center justify-between",
+  packageTitle: "text-lg font-semibold text-secondary-900 dark:text-white",
+  packageDescription: "text-sm text-secondary-500",
+  packagePrice: "text-xl font-bold text-primary-600",
+  restoreButton: "mt-6",
+  termsText: "mt-6 mb-8 text-center text-xs text-secondary-400",
+} as const;
+
+export const closeIconColor = "#64748b";
+export const featureIconColor = "#3b82f6";

@@ -1,0 +1,50 @@
+name: EAS Submit
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Platform to submit"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - ios
+          - android
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Submit to stores
+        run: |
+          PLATFORM="${{ github.event.inputs.platform }}"
+
+          if [ "$PLATFORM" == "all" ]; then
+            eas submit --platform all --latest --non-interactive
+          else
+            eas submit --platform $PLATFORM --latest --non-interactive
+          fi
+        env:
+          EXPO_APPLE_ID: ${{ secrets.EXPO_APPLE_ID }}
+          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
